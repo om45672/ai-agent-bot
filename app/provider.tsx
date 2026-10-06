@@ -1,26 +1,19 @@
 "use client"
 
 import { useSession } from 'next-auth/react'
-import React from 'react'
-
+import React, { useEffect } from 'react'
+import axios from 'axios'
 function Provider({ children }: { children: React.ReactNode }) {
     const {data} = useSession();
-
+    useEffect(() => {
+        if(data?.user?.email){
+            createNewUser();
+        }
+    }, [data]);
     const createNewUser = async () => {
         try {
-            const response = await fetch('/api/user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to create user');
-            }
-
-            const data = await response.json();
-            console.log('User created successfully:', data);
+            const result = await axios.post('/api/user', {});
+            console.log('User created successfully:', result.data);
         } catch (error) {
             console.error('Error creating user:', error);
         }
