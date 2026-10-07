@@ -12,9 +12,9 @@ export const AgentConfig = pgTable("agent_config", {
   id: integer("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  agentImage: text("agentImage"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  userEmail: text("userEmail").notNull().references(() => users.email),
+  agentImage: text("agent_image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  userEmail: text("user_email").notNull().references(() => users.email),
 });
 
 export type User = typeof users.$inferSelect;

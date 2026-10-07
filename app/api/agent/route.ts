@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq, desc } from "drizzle-orm";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { db } from "@/db";
-import { AgentConfig } from "@/db/schema";
+import { AgentConfig, users } from "@/db/schema";
 import { getServerSession } from "next-auth/next";
 
 export async function POST(req: NextRequest) {
@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
         if (!session?.user?.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        await db.insert(users).values({ email: session.user.email }).onConflictDoNothing({ target: users.email });
 
         const [agentConfig] = await db.insert(AgentConfig).values({
             id: agentId,
