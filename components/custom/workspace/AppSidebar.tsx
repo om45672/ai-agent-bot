@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Compass, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { usePathname } from "next/navigation";
 
@@ -18,6 +18,7 @@ function AppSidebar() {
   const [agents, setAgents] = useState<SidebarAgent[]>([]);
   const [agentsError, setAgentsError] = useState(false);
   const [agentsLoading, setAgentsLoading] = useState(true);
+  const requestSequence = useRef(0);
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
@@ -33,26 +34,29 @@ function AppSidebar() {
     setAgentsLoading(true);
     setAgentsError(false);
     async function getUserAgents() {
+      const requestId = ++requestSequence.current;
       try {
         const result = await axios.get<{ agentConfigs: SidebarAgent[] }>("/api/agent");
-        if (!cancelled) {
+        if (!cancelled && requestId === requestSequence.current) {
           setAgents(Array.isArray(result.data.agentConfigs) ? result.data.agentConfigs : []);
           setAgentsError(false);
         }
       } catch (error) {
         console.error("Failed to load agents:", error);
-        if (!cancelled) {
+        if (!cancelled && requestId === requestSequence.current) {
           setAgents([]);
           setAgentsError(true);
         }
       } finally {
-        if (!cancelled) setAgentsLoading(false);
+        if (!cancelled && requestId === requestSequence.current) setAgentsLoading(false);
       }
     }
 
     void getUserAgents();
+    window.addEventListener("agent-config-updated", getUserAgents);
     return () => {
       cancelled = true;
+      window.removeEventListener("agent-config-updated", getUserAgents);
     };
   }, [status, session?.user?.email, pathname]);
 

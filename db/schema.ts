@@ -12,7 +12,8 @@ export const AgentConfig = pgTable("agent_config", {
   id: integer("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  agentImage: text("agent_image"),
+  // The existing database column was created with quoted camelCase naming.
+  agentImage: text("agentImage"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   userEmail: text("user_email").notNull().references(() => users.email),
 });
