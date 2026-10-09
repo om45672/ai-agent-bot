@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { db } from "@/db";
 import { AgentConfig, users } from "@/db/schema";
@@ -80,15 +80,75 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
+        const {searchParams} = new URL(req.url);
+        const agentId = searchParams.get("agentId");
+
         if (!session?.user?.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
-
+        if(agentId){
+            const parsedAgentId = Number(agentId);
+            if (!Number.isInteger(parsedAgentId) || parsedAgentId < 1 || parsedAgentId > 2147483647) {
+                return NextResponse.json({ error: "Agent ID must be a positive 32-bit integer" }, { status: 400 });
+            }
+            const agentConfig = await db.select().from(AgentConfig).where(and(eq(AgentConfig.userEmail, session.user.email), eq(AgentConfig.id, parsedAgentId)));
+            if(agentConfig.length === 0){
+                return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+            }
+            return NextResponse.json({ agentConfig: agentConfig[0] }, { status: 200 });
+        }
         const agentConfigs = await db.select().from(AgentConfig).where(eq(AgentConfig.userEmail, session.user.email)).orderBy(desc(AgentConfig.createdAt));
 
         return NextResponse.json({ agentConfigs }, { status: 200 });
     } catch (error) {
         console.error("Failed to fetch agents:", error);
         return NextResponse.json({ error: "Failed to fetch agents" }, { status: 500 });
+    }
+}
+
+export async function PUT(req: NextRequest) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const agentId = Number(new URL(req.url).searchParams.get("agentId"));
+        if (!Number.isInteger(agentId) || agentId < 1 || agentId > 2147483647) {
+            return NextResponse.json({ error: "Agent ID must be a positive 32-bit integer" }, { status: 400 });
+        }
+
+        const body: unknown = await req.json();
+        if (!body || typeof body !== "object" || Array.isArray(body)) {
+            return NextResponse.json({ error: "Request body must be an object" }, { status: 400 });
+        }
+        const { name, description, agentImage } = body as Record<string, unknown>;
+        if (typeof name !== "string" || !name.trim() || name.trim().length > 80) {
+            return NextResponse.json({ error: "Agent name must be between 1 and 80 characters" }, { status: 400 });
+        }
+        if (description !== undefined && description !== null && typeof description !== "string") {
+            return NextResponse.json({ error: "Description must be text" }, { status: 400 });
+        }
+        if (typeof description === "string" && description.length > 500) {
+            return NextResponse.json({ error: "Description must be 500 characters or fewer" }, { status: 400 });
+        }
+        if (agentImage !== undefined && agentImage !== null && typeof agentImage !== "string") {
+            return NextResponse.json({ error: "Agent image must be a URL" }, { status: 400 });
+        }
+
+        const [updatedAgentConfig] = await db.update(AgentConfig).set({
+            name: name.trim(),
+            description: typeof description === "string" && description.trim() ? description.trim() : null,
+            agentImage: typeof agentImage === "string" ? agentImage : null,
+            createdAt: new Date(),
+        }).where(and(eq(AgentConfig.userEmail, session.user.email), eq(AgentConfig.id, agentId))).returning();
+
+        if (!updatedAgentConfig) {
+            return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+        }
+        return NextResponse.json({ message: "Agent updated successfully", agentConfig: updatedAgentConfig }, { status: 200 });
+    } catch (error) {
+        console.error("Failed to update agent:", error);
+        return NextResponse.json({ error: "Failed to update agent" }, { status: 500 });
     }
 }

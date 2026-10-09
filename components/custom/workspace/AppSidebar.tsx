@@ -51,8 +51,10 @@ function AppSidebar() {
     }
 
     void getUserAgents();
+    window.addEventListener("agent-config-updated", getUserAgents);
     return () => {
       cancelled = true;
+      window.removeEventListener("agent-config-updated", getUserAgents);
     };
   }, [status, session?.user?.email, pathname]);
 
