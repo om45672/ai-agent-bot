@@ -135,12 +135,21 @@ export async function PUT(req: NextRequest) {
         if (agentImage !== undefined && agentImage !== null && typeof agentImage !== "string") {
             return NextResponse.json({ error: "Agent image must be a URL" }, { status: 400 });
         }
+        if (typeof agentImage === "string") {
+            try {
+                const imageUrl = new URL(agentImage);
+                if (imageUrl.protocol !== "https:" || imageUrl.hostname !== "api.dicebear.com") {
+                    return NextResponse.json({ error: "Agent image URL is not supported" }, { status: 400 });
+                }
+            } catch {
+                return NextResponse.json({ error: "Agent image URL is invalid" }, { status: 400 });
+            }
+        }
 
         const [updatedAgentConfig] = await db.update(AgentConfig).set({
             name: name.trim(),
             description: typeof description === "string" && description.trim() ? description.trim() : null,
             agentImage: typeof agentImage === "string" ? agentImage : null,
-            createdAt: new Date(),
         }).where(and(eq(AgentConfig.userEmail, session.user.email), eq(AgentConfig.id, agentId))).returning();
 
         if (!updatedAgentConfig) {

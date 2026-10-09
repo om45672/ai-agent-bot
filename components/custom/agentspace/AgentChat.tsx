@@ -23,9 +23,9 @@ export default function AgentChat() {
           <div className="flex items-end gap-3"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700"><Bot size={17} /></div><div className="max-w-[85%] rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 shadow-sm">Absolutely. I can help you review your priorities and sketch out a plan. What are the most important things you’d like to focus on?</div></div>
         </div>
         <div className="mx-auto w-full max-w-2xl pb-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-violet-300 focus-within:ring-4 focus-within:ring-violet-50">
-            <textarea aria-label="Message your agent" placeholder="Ask your agent anything..." rows={2} className="w-full resize-none bg-transparent px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400" />
-            <div className="flex items-center justify-between px-1 pb-1"><span className="text-xs text-slate-400">Orbit Assistant</span><button type="button" aria-label="Send message" className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white transition hover:bg-violet-700"><Send size={16} /></button></div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+            <textarea aria-label="Message your agent (preview only)" placeholder="Chat is available in preview only" rows={2} disabled className="w-full resize-none bg-transparent px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed" />
+            <div className="flex items-center justify-between px-1 pb-1"><span className="text-xs text-slate-400">Preview only</span><button type="button" aria-label="Send message (preview only)" disabled className="flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-xl bg-violet-300 text-white"><Send size={16} /></button></div>
           </div><p className="mt-3 text-center text-[11px] text-slate-400">AI can make mistakes. Review important information.</p>
         </div>
       </div>
